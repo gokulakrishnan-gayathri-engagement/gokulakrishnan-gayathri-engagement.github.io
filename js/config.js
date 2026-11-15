@@ -102,7 +102,7 @@ window.INVITE = {
 
   closing: {
     tamilTitle: "தங்கள் வருகையை எதிர்நோக்கும்",
-    englishLine: "Awaiting your gracious presence",
+    englishLine: "",
     groomSide: {
       // Each name is either "Name" or { name, title } — title shows on its own line beneath
       names: [
@@ -134,10 +134,15 @@ window.INVITE = {
     },
   },
 
+  // Music starts when the doors open. Use either a YouTube clip or an audio file
+  // (leave both empty to hide the music button).
   music: {
-    src: "",              // e.g. "assets/music/song.mp3" — "" hides the music button
-    title: "",            // shown briefly when the song starts
-    startAt: 0,           // seconds into the track to begin
+    youtube: { id: "", start: 0, end: 0 },   // the Vazhithunaiye uploads block embedding (error 150)
+    src: "assets/music/vazhithunaiye.mp3",   // used when youtube.id is ""
+    startAt: 0,           // for src: seconds into the file to begin
+    endAt: 0,             // for src: seconds to loop back at (0 = play to the end)
+    title: "Vazhithunaiye · Dragon",   // shown briefly when the song starts
+    tapHint: "Tap ♪ for music",        // shown if the phone blocks autoplay
     volume: 0.6,
   },
 

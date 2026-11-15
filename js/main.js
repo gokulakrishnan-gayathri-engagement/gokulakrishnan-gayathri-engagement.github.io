@@ -479,44 +479,169 @@
     };
   }
 
+  // Volume envelope: fade in over the first seconds of the clip, fade out before its end
+  const envelope = (t, start, end, fadeIn = 2.5, fadeOut = 3) =>
+    Math.max(0, Math.min(1, (t - start) / fadeIn, end ? (end - t) / fadeOut : 1));
+
+  function filePlayer(m, onChange, onFail) {
+    const audio = new Audio(m.src);
+    const start = m.startAt || 0;
+    const end = m.endAt || 0;
+    const vol = m.volume ?? 0.6;
+    audio.preload = "auto";
+    audio.volume = 0;
+    let begun = false;
+    audio.addEventListener("timeupdate", () => {
+      if (end && audio.currentTime >= end) audio.currentTime = start;
+      audio.volume = vol * envelope(audio.currentTime, start, end);
+    });
+    audio.addEventListener("ended", () => {
+      audio.currentTime = start;
+      audio.play().catch(() => {});
+    });
+    audio.addEventListener("play", () => onChange(true));
+    audio.addEventListener("pause", () => onChange(false));
+    audio.addEventListener("error", onFail);
+    return {
+      play() {
+        if (!begun) {
+          begun = true;
+          audio.currentTime = start;
+        }
+        audio.play().catch(() => onChange(false));
+      },
+      pause: () => audio.pause(),
+    };
+  }
+
+  function youtubePlayer(m, onChange, onFail) {
+    const y = m.youtube;
+    const start = y.start || 0;
+    const end = y.end || 0;
+    const vol = Math.round((m.volume ?? 0.6) * 100);
+    const host = document.createElement("div");
+    host.className = "yt-host";
+    host.setAttribute("aria-hidden", "true");
+    host.innerHTML = `<div id="yt-player"></div>`;
+    document.body.appendChild(host);
+
+    let player;
+    let ready = false;
+    let wanted = false;
+    let fader;
+    const fade = () => {
+      clearInterval(fader);
+      fader = setInterval(() => {
+        const t = player.getCurrentTime();
+        player.setVolume(Math.round(vol * envelope(t, start, end)));
+        if (end && t >= end - 0.2) {
+          player.seekTo(start, true);
+        }
+      }, 150);
+    };
+
+    window.onYouTubeIframeAPIReady = () => {
+      player = new YT.Player("yt-player", {
+        videoId: y.id,
+        width: 200,
+        height: 200,
+        playerVars: { start, controls: 0, disablekb: 1, playsinline: 1, rel: 0, fs: 0, iv_load_policy: 3 },
+        events: {
+          onReady() {
+            ready = true;
+            player.setVolume(0);
+            if (wanted) player.playVideo();
+          },
+          onStateChange(e) {
+            if (e.data === YT.PlayerState.ENDED) {
+              player.seekTo(start, true);
+              player.playVideo();
+              return;
+            }
+            const playing = e.data === YT.PlayerState.PLAYING;
+            if (playing) fade();
+            else if (e.data === YT.PlayerState.PAUSED) clearInterval(fader);
+            onChange(playing);
+          },
+          onError(e) {
+            // 101 / 150: the owner has disabled embedding; 100: video removed
+            if ([100, 101, 150].includes(e.data)) onFail();
+          },
+        },
+      });
+    };
+    const s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(s);
+
+    return {
+      play() {
+        wanted = true;
+        if (ready) player.playVideo();
+      },
+      pause() {
+        wanted = false;
+        if (ready) player.pauseVideo();
+      },
+    };
+  }
+
   function setupMusic() {
     const m = C.music || {};
-    if (!m.src) return { play() {}, reveal() {} };
-
-    const audio = new Audio(m.startAt ? `${m.src}#t=${m.startAt}` : m.src);
-    audio.loop = true;
-    audio.preload = "auto";
-    audio.volume = m.volume ?? 0.6;
+    const useYoutube = m.youtube && m.youtube.id;
+    if (!m.src && !useYoutube) return { play() {}, reveal() {} };
 
     const root = document.getElementById("music-root");
     root.innerHTML = `
       <button class="music-btn" id="music-btn" type="button" aria-label="Play music">
         <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
       </button>
-      ${opt(m.title, `<div class="toast" id="toast">♪ ${esc(m.title)}</div>`)}`;
+      <div class="toast" id="toast"></div>`;
     const btn = document.getElementById("music-btn");
     const toast = document.getElementById("toast");
-    let toastShown = false;
+    let playing = false;
+    let titleShown = false;
+    let toastTimer;
 
-    const sync = () => {
-      const playing = !audio.paused;
+    const say = (text, ms = 4500) => {
+      if (!text) return;
+      toast.textContent = text;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), ms);
+    };
+    const onChange = (isPlaying) => {
+      playing = isPlaying;
       btn.classList.toggle("playing", playing);
       btn.setAttribute("aria-label", playing ? "Pause music" : "Play music");
-      if (playing && toast && !toastShown) {
-        toastShown = true;
-        toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 4500);
+      if (playing) {
+        btn.classList.remove("nudge");
+        if (!titleShown && m.title) {
+          titleShown = true;
+          say(`♪ ${m.title}`);
+        }
       }
     };
-    audio.addEventListener("play", sync);
-    audio.addEventListener("pause", sync);
-    audio.addEventListener("error", () => root.remove());
 
-    const play = () => audio.play().catch(() => {});
-    btn.addEventListener("click", () => (audio.paused ? play() : audio.pause()));
+    let failed = false;
+    const fail = () => {
+      failed = true;
+      root.remove();
+    };
+    const player = useYoutube ? youtubePlayer(m, onChange, fail) : filePlayer(m, onChange, fail);
+    btn.addEventListener("click", () => (playing ? player.pause() : player.play()));
 
     return {
-      play,
+      play() {
+        player.play();
+        // Phones may refuse sound that isn't started by a direct tap on the player
+        setTimeout(() => {
+          if (!playing && !failed) {
+            btn.classList.add("nudge");
+            say(m.tapHint || "Tap ♪ for music", 6000);
+          }
+        }, 3500);
+      },
       reveal() {
         btn.classList.add("show");
       },
