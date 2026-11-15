@@ -1050,15 +1050,16 @@ h1, h2, p, blockquote {
 
 .music-btn {
   position: fixed;
-  right: max(18px, env(safe-area-inset-right));
-  bottom: max(18px, env(safe-area-inset-bottom));
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
   z-index: 60;
-  width: 54px;
-  height: 54px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--gold-400);
   background: radial-gradient(circle at 50% 35%, var(--crimson-500), var(--maroon-900));
-  box-shadow: 0 0 0 4px rgba(46, 5, 11, 0.8), 0 0 0 5px var(--line), 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 3px rgba(46, 5, 11, 0.8), 0 0 0 4px var(--line), 0 6px 16px rgba(0, 0, 0, 0.5);
   color: var(--gold-300);
   cursor: pointer;
   display: flex;
@@ -1076,8 +1077,8 @@ h1, h2, p, blockquote {
 }
 
 .music-btn .bar {
-  width: 3px;
-  height: 16px;
+  width: 2.5px;
+  height: 13px;
   border-radius: 2px;
   background: var(--gold-300);
   transform-origin: bottom;
@@ -1089,8 +1090,8 @@ h1, h2, p, blockquote {
 }
 
 @keyframes nudge {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(46, 5, 11, 0.8), 0 0 0 5px var(--line), 0 0 0 0 rgba(212, 175, 55, 0.55); }
-  50% { box-shadow: 0 0 0 4px rgba(46, 5, 11, 0.8), 0 0 0 5px var(--line), 0 0 0 14px rgba(212, 175, 55, 0); }
+  0%, 100% { box-shadow: 0 0 0 3px rgba(46, 5, 11, 0.8), 0 0 0 4px var(--line), 0 0 0 0 rgba(212, 175, 55, 0.55); }
+  50% { box-shadow: 0 0 0 3px rgba(46, 5, 11, 0.8), 0 0 0 4px var(--line), 0 0 0 11px rgba(212, 175, 55, 0); }
 }
 
 /* Off-screen YouTube player (audio only) */
@@ -1121,8 +1122,8 @@ h1, h2, p, blockquote {
 
 .toast {
   position: fixed;
-  right: calc(max(18px, env(safe-area-inset-right)) + 66px);
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 12px);
+  top: calc(max(12px, env(safe-area-inset-top)) + 5px);
+  right: calc(max(12px, env(safe-area-inset-right)) + 52px);
   z-index: 60;
   max-width: 60vw;
   padding: 0.45rem 1rem;

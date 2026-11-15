@@ -479,9 +479,10 @@
     };
   }
 
-  // Volume envelope: fade in over the first seconds of the clip, fade out before its end
-  const envelope = (t, start, end, fadeIn = 2.5, fadeOut = 3) =>
-    Math.max(0, Math.min(1, (t - start) / fadeIn, end ? (end - t) / fadeOut : 1));
+  // Volume envelope: eased fade in at the start of the clip, fade out before its end
+  const smooth = (x) => x * x * (3 - 2 * x);
+  const envelope = (t, start, end, fadeIn = 4, fadeOut = 5) =>
+    smooth(Math.max(0, Math.min(1, (t - start) / fadeIn, end ? (end - t) / fadeOut : 1)));
 
   function filePlayer(m, onChange, onFail) {
     const audio = new Audio(m.src);
@@ -497,10 +498,23 @@
       if (gain) gain.gain.value = v;
       else audio.volume = v;
     };
+    // "duck" eases the pause button in and out: 0 = silent, 1 = full envelope level
+    const DUCK_SECONDS = 1.2;
+    let duck = 0;
+    let duckTarget = 1;
+    let last = 0;
     let raf;
-    const tick = () => {
+    const tick = (now) => {
+      const dt = last ? (now - last) / 1000 : 0;
+      last = now;
+      const step = dt / DUCK_SECONDS;
+      duck = duckTarget > duck ? Math.min(duckTarget, duck + step) : Math.max(duckTarget, duck - step);
       if (m.endAt && audio.currentTime >= m.endAt) audio.currentTime = start;
-      setLevel(vol * envelope(audio.currentTime, start, endOf()));
+      setLevel(vol * envelope(audio.currentTime, start, endOf()) * smooth(duck));
+      if (duckTarget === 0 && duck === 0) {
+        audio.pause();
+        return;
+      }
       raf = requestAnimationFrame(tick);
     };
 
@@ -511,7 +525,8 @@
     });
     audio.addEventListener("play", () => {
       cancelAnimationFrame(raf);
-      tick();
+      last = 0;
+      raf = requestAnimationFrame(tick);
       onChange(true);
     });
     audio.addEventListener("pause", () => {
@@ -535,11 +550,21 @@
         if (!begun) {
           begun = true;
           audio.currentTime = start;
+          duck = 1;
+        }
+        duckTarget = 1;
+        if (!audio.paused) {
+          onChange(true);
+          return;
         }
         setLevel(0);
         audio.play().catch(() => onChange(false));
       },
-      pause: () => audio.pause(),
+      pause() {
+        duckTarget = 0;
+        // Show the paused state right away while the sound fades out
+        onChange(false);
+      },
     };
   }
 

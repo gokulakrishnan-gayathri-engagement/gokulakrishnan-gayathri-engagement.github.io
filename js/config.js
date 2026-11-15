@@ -141,7 +141,7 @@ window.INVITE = {
     src: "assets/music/vazhithunaiye.mp3",   // 0:27 – 1:49 of the song, trimmed
     startAt: 0,           // for src: seconds into the file to begin
     endAt: 0,             // for src: seconds to loop back at (0 = play to the end)
-    title: "Vazhithunaiye · Dragon",   // shown briefly when the song starts
+    title: "",            // shown briefly when the song starts ("" = don't show)
     tapHint: "Tap ♪ for music",        // shown if the phone blocks autoplay
     volume: 0.6,
   },
