@@ -138,7 +138,7 @@ window.INVITE = {
   // (leave both empty to hide the music button).
   music: {
     youtube: { id: "", start: 0, end: 0 },   // the Vazhithunaiye uploads block embedding (error 150)
-    src: "assets/music/vazhithunaiye.mp3",   // used when youtube.id is ""
+    src: "assets/music/vazhithunaiye.mp3",   // 0:27 – 1:49 of the song, trimmed
     startAt: 0,           // for src: seconds into the file to begin
     endAt: 0,             // for src: seconds to loop back at (0 = play to the end)
     title: "Vazhithunaiye · Dragon",   // shown briefly when the song starts

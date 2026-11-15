@@ -486,28 +486,57 @@
   function filePlayer(m, onChange, onFail) {
     const audio = new Audio(m.src);
     const start = m.startAt || 0;
-    const end = m.endAt || 0;
     const vol = m.volume ?? 0.6;
+    const endOf = () => m.endAt || audio.duration || 0;
     audio.preload = "auto";
-    audio.volume = 0;
+
+    // iOS ignores audio.volume, so fades go through a Web Audio gain node when available
+    let ctx = null;
+    let gain = null;
+    const setLevel = (v) => {
+      if (gain) gain.gain.value = v;
+      else audio.volume = v;
+    };
+    let raf;
+    const tick = () => {
+      if (m.endAt && audio.currentTime >= m.endAt) audio.currentTime = start;
+      setLevel(vol * envelope(audio.currentTime, start, endOf()));
+      raf = requestAnimationFrame(tick);
+    };
+
     let begun = false;
-    audio.addEventListener("timeupdate", () => {
-      if (end && audio.currentTime >= end) audio.currentTime = start;
-      audio.volume = vol * envelope(audio.currentTime, start, end);
-    });
     audio.addEventListener("ended", () => {
       audio.currentTime = start;
       audio.play().catch(() => {});
     });
-    audio.addEventListener("play", () => onChange(true));
-    audio.addEventListener("pause", () => onChange(false));
+    audio.addEventListener("play", () => {
+      cancelAnimationFrame(raf);
+      tick();
+      onChange(true);
+    });
+    audio.addEventListener("pause", () => {
+      cancelAnimationFrame(raf);
+      onChange(false);
+    });
     audio.addEventListener("error", onFail);
     return {
       play() {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!ctx && AC) {
+          try {
+            ctx = new AC();
+            gain = ctx.createGain();
+            ctx.createMediaElementSource(audio).connect(gain).connect(ctx.destination);
+          } catch (e) {
+            gain = null;
+          }
+        }
+        if (ctx && ctx.state === "suspended") ctx.resume();
         if (!begun) {
           begun = true;
           audio.currentTime = start;
         }
+        setLevel(0);
         audio.play().catch(() => onChange(false));
       },
       pause: () => audio.pause(),
