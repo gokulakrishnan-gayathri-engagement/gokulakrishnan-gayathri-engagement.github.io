@@ -567,7 +567,7 @@ h1, h2, p, blockquote {
   align-items: center;
   font-family: var(--font-tamil);
   font-size: 2rem;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 /* Pillaiyar suzhi: உ with its customary double underline */
@@ -575,7 +575,7 @@ h1, h2, p, blockquote {
   content: "";
   width: 0.9em;
   height: 0.17em;
-  margin-top: 0.02em;
+  margin-top: -0.19em;
   border-top: 1.5px solid var(--gold-400);
   border-bottom: 1.5px solid var(--gold-400);
 }
