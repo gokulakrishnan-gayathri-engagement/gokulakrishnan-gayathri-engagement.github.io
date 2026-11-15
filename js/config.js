@@ -93,8 +93,8 @@ window.INVITE = {
   },
 
   venue: {
-    name: "Barathi Party Hall",
-    address: "Johnsonpet, Salem – 636007",
+    name: "Barathi VIP Party Hall",
+    address: "Itteri Road, Hastampatti, Salem",
     mapsQuery: "Barathi Party Hall, Johnsonpet, Salem",  // what the embedded map searches for
     mapsLink: "https://maps.app.goo.gl/Ye9z6xFbhd6Rfs8V9", // used by "Get directions"
     showMap: true,
