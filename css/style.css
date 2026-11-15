@@ -48,7 +48,6 @@
 }
 
 html {
-  scroll-behavior: smooth;
   scroll-snap-type: y mandatory;
   -webkit-text-size-adjust: 100%;
 }
@@ -185,9 +184,9 @@ h1, h2, p, blockquote {
 /* Each top-level section is one full-screen "page" */
 .page {
   min-height: 100vh;
-  /* dvh, not svh: on iOS the screen grows when toolbars collapse, and an svh-tall
-     last page can't scroll far enough to snap fully into view */
-  min-height: 100dvh;
+  /* lvh: a fixed height that matches the screen once mobile toolbars collapse.
+     dvh resizes mid-swipe (pages jump); svh leaves the last page short on iOS. */
+  min-height: 100lvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -210,8 +209,8 @@ h1, h2, p, blockquote {
 
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 1.1s var(--ease-out), transform 1.1s var(--ease-out);
+  transform: translateY(12px);
+  transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
 }
 
 .reveal.in {

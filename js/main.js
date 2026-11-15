@@ -369,18 +369,19 @@
       els.forEach((e) => e.classList.add("in"));
       return;
     }
+    // Reveal a whole page as it starts sliding in, so it never arrives empty mid-swipe
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((en) => {
           if (en.isIntersecting) {
-            en.target.classList.add("in");
+            en.target.querySelectorAll(".reveal").forEach((e) => e.classList.add("in"));
             io.unobserve(en.target);
           }
         });
       },
-      { threshold: 0.15, rootMargin: "0px 0px -6% 0px" }
+      { threshold: 0.08 }
     );
-    els.forEach((e) => io.observe(e));
+    document.querySelectorAll(".page").forEach((p) => io.observe(p));
   }
 
   /* Falling jasmine & marigold petals */
